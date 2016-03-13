@@ -21,7 +21,19 @@ export default class RouteContainer extends React.Component {
     const {route} = routerProps;
     const {routeAggregator} = this.context;
 
-    const {queries} = route;
+    let key = "default";
+    for(var i in route.components){
+      if(route.components[i] == Component)
+        key = i;
+    }
+
+    let {queries} = route;
+
+    if(typeof route.components != "object")
+      queries = { "default":queries };
+
+    queries = queries[key];
+
     if (!queries) {
       return createElement(Component, routerProps);
     }
@@ -44,6 +56,8 @@ export default class RouteContainer extends React.Component {
       }
     } else if (fragmentPointers) {
       const data = {...routerProps, ...params, ...fragmentPointers};
+
+      data.route.queries = queries;
 
       const {renderFetched} = route;
       if (renderFetched) {

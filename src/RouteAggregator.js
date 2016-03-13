@@ -28,48 +28,64 @@ export default class RouteAggregator {
     const fragmentSpecs = {};
 
     routes.forEach((route, i) => {
-      const {queries} = route;
+      let {queries} = route;
       if (!queries) {
         return;
       }
 
-      const component = components[i];
+      let component = components[i];
 
       // In principle not all container component routes have to specify
       // queries, because some of them might somehow receive fragments from
       // their parents, but it would definitely be wrong to specify queries
       // for a component that isn't a container.
-      invariant(
-        Relay.isContainer(component),
-        'relay-nested-routes: Route with queries specifies component `%s` ' +
-        'that is not a Relay container.',
-        component.displayName || component.name
-      );
 
-      const routeParams = getParamsForRoute({route, routes, params, location});
-      Object.assign(relayRoute.params, routeParams);
+      if(typeof component != "object"){
+        component = { "default": component };
+        queries = { "default": queries };
+      }
 
-      Object.keys(queries).forEach(queryName => {
-        const query = queries[queryName];
-        const uniqueQueryName = this._getUniqueQueryName(route, queryName);
+      Object.keys(component).forEach(function(c) {
+        let comp = component[c];
+        let myQ = queries[c];
 
-        // Relay depends on the argument count of the query function, so try to
-        // preserve it as well as possible.
-        let wrappedQuery;
-        if (query.length === 0) {
-          // Relay doesn't like using the exact same query in multiple places,
-          // so wrap it to prevent that when sharing queries between routes.
-          wrappedQuery = () => query();
-        } else {
-          // We just need the query function to have > 0 arguments.
-          /* eslint-disable no-unused-vars */
-          wrappedQuery = _ => query(component, routeParams);
-          /* eslint-enable */
+        if(!myQ){
+          return;
         }
 
-        relayRoute.queries[uniqueQueryName] = wrappedQuery;
-        fragmentSpecs[uniqueQueryName] = {component, queryName};
-      });
+        invariant(
+          Relay.isContainer(comp),
+          'relay-nested-routes: Route with queries specifies component `%s` ' +
+          'that is not a Relay container.',
+          comp.displayName || comp.name
+        );
+
+        const routeParams = getParamsForRoute({route, routes, params, location});
+        Object.assign(relayRoute.params, routeParams);
+
+        Object.keys(myQ).forEach(queryName => {
+          const query = myQ[queryName];
+          const uniqueQueryName = this._getUniqueQueryName(route, c, queryName);
+
+          // Relay depends on the argument count of the query function, so try to
+          // preserve it as well as possible.
+          let wrappedQuery;
+          if (query.length === 0) {
+            // Relay doesn't like using the exact same query in multiple places,
+            // so wrap it to prevent that when sharing queries between routes.
+            wrappedQuery = () => query();
+          } else {
+            // We just need the query function to have > 0 arguments.
+            /* eslint-disable no-unused-vars */
+            wrappedQuery = _ => query(comp, routeParams);
+            /* eslint-enable */
+          }
+
+          relayRoute.queries[uniqueQueryName] = wrappedQuery;
+          fragmentSpecs[uniqueQueryName] = {component:comp, queryName};
+        });
+
+      }.bind(this));    
     });
 
     relayRoute.name =
@@ -81,7 +97,7 @@ export default class RouteAggregator {
     this._fragmentSpecs = fragmentSpecs;
   }
 
-  _getUniqueQueryName(route, queryName) {
+  _getUniqueQueryName(route, compKey, queryName) {
     // There might be some edge case here where the query changes but the route
     // object does not, in which case we'll keep using the old unique name.
     // Anybody who does that deserves whatever they get, though.
@@ -90,7 +106,7 @@ export default class RouteAggregator {
     if (route.name) {
       // The slightly different template here ensures that we can't have
       // collisions with the below template.
-      return `$_${route.name}_${queryName}`;
+      return `$_${route.name}_${compKey}_${queryName}`;
     }
 
     // Otherwise, use referential equality on the route name to generate a
@@ -101,7 +117,7 @@ export default class RouteAggregator {
       this._routeIndices.set(route, routeIndex);
     }
 
-    return `$$_route[${routeIndex}]_${queryName}`;
+    return `$$_route[${routeIndex}]_${compKey}_${queryName}`;
   }
 
   setFailure(error, retry) {
@@ -128,15 +144,19 @@ export default class RouteAggregator {
     }
 
     const fragmentPointers = {};
-    for (const queryName of Object.keys(queries)) {
-      const uniqueQueryName = this._getUniqueQueryName(route, queryName);
 
-      const fragmentPointer = this._data[uniqueQueryName];
-      if (!fragmentPointer) {
-        return this._getDataNotFound();
+    const mangledQueries = typeof route.components == "object" ? queries : { "default": queries };
+    for (const compKey of Object.keys(mangledQueries)){
+      for (const queryName of Object.keys(queries[compKey])) {
+        const uniqueQueryName = this._getUniqueQueryName(route, compKey, queryName);
+
+        const fragmentPointer = this._data[uniqueQueryName];
+        if (!fragmentPointer) {
+          return this._getDataNotFound();
+        }
+
+        fragmentPointers[queryName] = fragmentPointer;
       }
-
-      fragmentPointers[queryName] = fragmentPointer;
     }
 
     return {
