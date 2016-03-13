@@ -1,14 +1,14 @@
-# react-router-relay [![npm version][npm-badge]][npm]
+# react-router-relay [![Travis][build-badge]][build] [![npm][npm-badge]][npm]
 [Relay](http://facebook.github.io/relay/) integration for [React Router](http://rackt.github.io/react-router/).
 
 [![Discord][discord-badge]][discord]
 
 ## Usage
 
-Use `<RelayRouter>` or `<RelayRoutingContext>` instead of `<Router>` or `<RoutingContext>` respectively, then define Relay queries and render callbacks for each of your routes:
+Use `<RelayRouter>` or `<RelayRouterContext>` instead of `<Router>` or `<RouterContext>` respectively, then define Relay queries and render callbacks for each of your routes:
 
 ```js
-import {RelayRouter} from 'react-router-relay';
+import { RelayRouter } from 'react-router-relay';
 
 /* ... */
 
@@ -38,7 +38,7 @@ ReactDOM.render((
         queries={WidgetQueries}
       />
     </Route>
-  </Router>
+  </RelayRouter>
 ), container);
 ```
 
@@ -49,6 +49,8 @@ You can find an example implementation of TodoMVC with routing using `react-rout
 ## Guide
 
 ### Installation
+
+**Note:** Releases from v0.9.0 onward only support React Router v2.x. For React Router 1.x support, use v0.8.0 or earlier.
 
 ```shell
 $ npm install react react-dom react-relay react-router
@@ -171,7 +173,7 @@ These have the same signature and behavior as they do on `Relay.RootContainer`, 
 
 ### Additional `Relay.RootContainer` configuration
 
-We pass through additional props on `<RelayRouter>` or `<RelayRoutingContext>` are to the underlying `Relay.RootContainer`. You can use this to control props like `forceFetch` on the `Relay.RootContainer`:
+We pass through additional props on `<RelayRouter>` or `<RelayRouterContext>` are to the underlying `Relay.RootContainer`. You can use this to control props like `forceFetch` on the `Relay.RootContainer`:
 
 ```js
 <RelayRouter
@@ -182,6 +184,7 @@ We pass through additional props on `<RelayRouter>` or `<RelayRoutingContext>` a
 
 ### Notes
 
+- `react-router-relay` currently does not support [named components](https://github.com/rackt/react-router/blob/master/docs/API.md#named-components).
 - `react-router-relay` only updates the Relay route on actual location changes. Specifically, it will not update the Relay route after changes to location state, so ensure that you update your container variables appropriately when updating location state.
 - `react-router-relay` uses referential equality on route objects to generate unique names for queries. If your `route` objects do not maintain referential equality, then you can specify a globally unique `name` property on the route to identify it.
 - Relay's re-rendering optimizations only work when all non-Relay props are scalar. As the props injected by React Router are objects, they disable these re-rendering optimizations. To take maximum advantage of these optimizations, you should make the `render` methods on your route components as lightweight as possible, and do as much rendering work as possible in child components that only receive scalar and Relay props.
@@ -192,8 +195,11 @@ We pass through additional props on `<RelayRouter>` or `<RelayRoutingContext>` a
 - [@cpojer](https://github.com/cpojer)
 - [@taion](https://github.com/taion)
 
+[build-badge]: https://img.shields.io/travis/relay-tools/react-router-relay/master.svg
+[build]: https://travis-ci.org/relay-tools/react-router-relay
+
 [npm-badge]: https://img.shields.io/npm/v/react-router-relay.svg
 [npm]: https://www.npmjs.com/package/react-router-relay
 
-[discord-badge]: https://img.shields.io/badge/Discord-join%20chat%20%E2%86%92-738bd7.svg?style=flat-square
+[discord-badge]: https://img.shields.io/badge/Discord-join%20chat%20%E2%86%92-738bd7.svg
 [discord]: https://discord.gg/0ZcbPKXt5bX40xsQ

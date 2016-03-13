@@ -19,7 +19,7 @@ export default class RouteAggregator {
     this._readyState = null;
   }
 
-  updateRoute({routes, components, params, location}) {
+  updateRoute({ routes, components, params, location }) {
     const relayRoute = {
       name: null,
       queries: {},
@@ -166,7 +166,7 @@ export default class RouteAggregator {
   }
 
   _getDataNotFound() {
-    return {failure: this._failure};
+    return { failure: this._failure };
   }
 
   getFragmentNames() {
@@ -174,7 +174,7 @@ export default class RouteAggregator {
   }
 
   getFragment(fragmentName, variableMapping) {
-    const {component, queryName} = this._fragmentSpecs[fragmentName];
+    const { component, queryName } = this._fragmentSpecs[fragmentName];
     return component.getFragment(queryName, variableMapping);
   }
 
