@@ -32,7 +32,7 @@ export default class RouteContainer extends React.Component {
     if(typeof route.components != "object")
       queries = { "default":queries };
 
-    queries = queries[key];
+    queries = !queries ? queries : queries[key];
 
     if (!queries) {
       return createElement(Component, routerProps);
